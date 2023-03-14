@@ -48,6 +48,8 @@ ArrayList<String> notifNames;
 // Only one image and SoundFile atm, needs to be updated    
 PImage backgroundImage;
 
+int drawn = 0;
+
 void setup() {
   
   SoundFile startupSound = new SoundFile(this, "data/NotificationSounds/Windows95Startup.aiff");
@@ -90,7 +92,7 @@ void setup() {
   allLocations.put(10, new FloatList(0.8, 0.70));
   allLocations.put(11, new FloatList(0.8, 0.1));
   
-   notifNames = new ArrayList<String>(
+  notifNames = new ArrayList<String>(
      Arrays.asList("Recycle", "Unable", "DriveFull", "SetUp", "ShutDown", "Benches",
      "Pirate", "Congratulations", "LowBattery", "Warning", "Downloading", "Outlook", "Instagram",
      "VPN", "Steam", "Captcha", "AIMMessenger", "UnsecureWebsite", "Text3", "Text2", "Text3",
@@ -125,10 +127,10 @@ void draw() {
   
   rate = constrain(int((startingRate / denominator) * rateMultiplier), minRate, maxRate);  
   
-  if(seconds % rate == 0) 
-  {
-    try {
-      
+   if(seconds % rate == 0) 
+   {
+     try {
+     
       // get random available location 
       int sensorIndex = getAvailableLocation();
       FloatList coordinates = getCoordinates(sensorIndex); //(x, y) coordinate associated to location index 
@@ -140,8 +142,8 @@ void draw() {
       Notification newNotification = notificationFactory.createNotification(image, file, coordinates.get(0), coordinates.get(1), sensorIndex);
       notifications.put(sensorIndex, newNotification);
       
-      updateAvailableLocations(); 
-      
+      updateAvailableLocations();  
+
     } catch(ArrayIndexOutOfBoundsException e) // no locations left to draw to, game is over
     {
       // THIS IS GAME OVER 
@@ -180,20 +182,14 @@ void mousePressed() {
 // remove the entry in notifications associated with sensorIndex if one exists 
 void checkIfClickedSerial()
 {
-  IntList toRemove = new IntList();
-  for(int clickedLocation : clickedLocations)
+  for(int i=0; i < clickedLocations.size(); i++) 
   {
-    notifications.remove(clickedLocation); // should do nothing if no notification exists at that location (but need to test..)
-    toRemove.append(clickedLocation);
-  }
-  
-  // to avoid ConcurrentModificationException
-  for(int remove : toRemove)
-  {
-    clickedLocations.remove(remove); // reset list otherwise it'll remove all subsequent notifications at that spot 
-  }
+    int location = clickedLocations.get(i); // get value at index i in clickedLocations
+    notifications.remove(location);
+  };
   
   updateAvailableLocations();
+  clickedLocations.clear();
 }
 
 FloatList getCoordinates(int index)
@@ -206,6 +202,7 @@ int getAvailableLocation()
 {
   int index = int(random(availableLocations.size()));
   return availableLocations.get(index);
+
 }
 
 String getRandomNotifName()
@@ -266,9 +263,10 @@ void serialEvent(Serial p) {
     
   for (int i = 0; i < 12; i++) {
     if (lastStatus[i] == 0 && status[i] == 1) { // contact!
+      System.out.println("clicked: " + i);
       println(i);     // Replace this line with where you want to push the data into
       clickedLocations.append(i); // append to a list of sensors that have been 'clicked'
-      lastStatus[i] = 1;
+      lastStatus[i] = 0;
     }
   }
 }
